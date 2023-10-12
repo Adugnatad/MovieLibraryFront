@@ -30,4 +30,4 @@ npm install
 After running the development server, you can view the app at http://localhost:5173/
 
 # Deployment
-The site is deployed at https://movie-library-front-mhepp1fzp-adugnatad.vercel.app/
+The site is deployed at https://movie-library-front.vercel.app/

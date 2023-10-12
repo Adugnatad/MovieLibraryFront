@@ -100,8 +100,8 @@ export default function MovieModal({
 
   const movieSchema = Yup.object().shape({
     movieName: Yup.string()
-      .min(2, "Too Short!")
-      .max(100, "Too Long!")
+      .min(2, "Minimum 2 characters!")
+      .max(100, "Maximum 100 characters!")
       .required("Required"),
     duration: Yup.string()
       .test(
@@ -127,8 +127,8 @@ export default function MovieModal({
       )
       .required("Required"),
     rating: Yup.number()
-      .min(0, "invalid rating!")
-      .max(10, "invalid rating!")
+      .min(0, "invalid rating less than minimum!")
+      .max(10, "invalid rating, maximum 10!")
       .required("Required"),
   });
 

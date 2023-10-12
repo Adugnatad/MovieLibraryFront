@@ -6,7 +6,6 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
-import { AiFillPlusCircle } from "react-icons/ai";
 import { ToastContainer } from "react-toastify";
 import { injectStyle } from "react-toastify/dist/inject-style";
 import { AppDispatch } from "../store";
@@ -14,6 +13,10 @@ import { useDispatch } from "react-redux";
 import { getMovies } from "../store/Actions";
 import { useSelector } from "react-redux";
 import MovieModal from "../Components/MovieModal";
+import { TableFooter, TablePagination } from "@mui/material";
+import TablePaginationActions from "@mui/material/TablePagination/TablePaginationActions";
+import Search from "../Components/Search";
+import HeaderAction from "../Components/HeaderActions";
 
 if (typeof window !== "undefined") {
   injectStyle();
@@ -27,9 +30,11 @@ export default function Landing() {
     movie_name: "";
     duration: "";
     rating: "";
-  }>(); // current modal being edited
+  }>({ movie_name: "", duration: "", rating: "" }); // current modal being edited
   const [searchTerm, setSearchTerm] = React.useState("");
   const { movies } = useSelector((state: any) => state?.movies);
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
@@ -38,81 +43,37 @@ export default function Landing() {
     }
   }, [open]);
 
-  const generateFile = (format: string) => {
-    if (format === "csv" || format === "txt") {
-      // Prepare the content based on the selected format
-      let content = "";
-      if (format === "csv") {
-        content = "Name,Duration (hours),Rating\n";
-      }
+  const handleModal = (title: string) => {
+    setOpen(!open);
+    setTitle(title);
+  };
 
-      movies.forEach((movie: any) => {
-        if (format === "csv") {
-          content += `${movie.movie_name},${parseFloat(movie.duration).toFixed(
-            2
-          )},${movie.rating}\n`;
-        } else if (format === "txt") {
-          content += `${movie.movie_name}, Duration: ${movie.duration}, Rating: ${movie.rating}\n`;
-        }
-      });
+  const handleSearch = (search: string) => {
+    setSearchTerm(search);
+  };
 
-      // Create a Blob with the content
-      const blob = new Blob([content], {
-        type: `text/${format};charset=utf-8`,
-      });
+  const emptyRows =
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - movies.length) : 0;
 
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `movie_data.${format}`;
-      link.click();
-    }
+  const handleChangePage = (
+    event: React.MouseEvent<HTMLButtonElement> | null,
+    newPage: number
+  ) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   return (
     <main className="flex flex-col">
-      <div className="search-header ">
-        <input
-          type="text"
-          className="search-bar bg-blue-100 "
-          placeholder="Search"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <button className="search-button">Search</button>
-      </div>
-      <div className="my-5 px-5 flex flex-wrap space-y-2 items-center justify-between self-center w-[90%]">
-        <div className="group bg-blue-100 py-2 px-2 rounded-lg">
-          <span className="text-[#000] cursor-pointer hover:text-[#FAC433] duration-200">
-            Download Data
-          </span>
-          <div className="flex flex-col min-w-[180px] w-[200px] py-2  text-black bg-black opacity-0 absolute px-3 duration-500 group-hover:opacity-100">
-            <div className="flex flex-col items-center justify-between  group ">
-              <button
-                onClick={() => generateFile("csv")}
-                className="my-2 text-[16px] text-[#fff] font-medium hover:text-[#FAC433]"
-              >
-                Download CSV
-              </button>
-              <button
-                onClick={() => generateFile("txt")}
-                className="my-2 text-[16px] text-[#fff] font-medium  hover:text-[#FAC433]"
-              >
-                Download TXT
-              </button>
-            </div>
-          </div>
-        </div>
-        <div
-          onClick={() => {
-            setOpen(true);
-            setTitle("Add");
-          }}
-          className="cursor-pointer flex flex-row space-x-3 py-1 px-2 rounded-lg bg-blue-100 justify-center items-center w-fit"
-        >
-          <span className="text-[18px] font-medium">Add a movie</span>
-          <AiFillPlusCircle size={30} />
-        </div>
-      </div>
+      <Search handleSearch={handleSearch} search={searchTerm} />
+
+      <HeaderAction handleModal={handleModal} />
       <TableContainer
         component={Paper}
         style={{ width: "90%", alignSelf: "center" }}
@@ -127,6 +88,7 @@ export default function Landing() {
           </TableHead>
           <TableBody>
             {movies
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .filter((movies: any) =>
                 movies.movie_name
                   .toUpperCase()
@@ -152,6 +114,26 @@ export default function Landing() {
                 </TableRow>
               ))}
           </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, { label: "All", value: -1 }]}
+                colSpan={3}
+                count={movies.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                SelectProps={{
+                  inputProps: {
+                    "aria-label": "rows per page",
+                  },
+                  native: true,
+                }}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                ActionsComponent={TablePaginationActions}
+              />
+            </TableRow>
+          </TableFooter>
         </Table>
       </TableContainer>
       <ToastContainer
